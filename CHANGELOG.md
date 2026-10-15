@@ -8,6 +8,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed — the docs give the real AgentSig clock window: 60 seconds (api, repo)
+
+The API has accepted an `X-Timestamp` up to 60 seconds from server time since 2026-09-10 (#99), but the docs still gave the old limits: 15 seconds in the OpenAPI `AgentSig` scheme, `README.md` and `packages/api/README.md`, and 30 seconds in `SPEC.md` (three places) and `SECURITY.md`. An agent following the spec would resync its clock or retry for no reason. All five now say 60 seconds, matching the 401 message and the skill. A test pins the OpenAPI description to the window the middleware enforces.
+
 ### Fixed — approving in the sign-in popup can't be broken by the email tab (mcp)
 
 The hosted MCP's sign-in popup and the email-link tab share one cookie, and every load of the Approve page used to mint a new CSRF token into it. If the link tab's fallback link (or a reload) loaded the page again, the Allow button already showing in the popup failed with "csrf validation failed". The only Allow that still worked was the one in the email tab, which returns to ChatGPT without its pending state, so the connection never finished.
