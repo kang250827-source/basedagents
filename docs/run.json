@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "run_id": "39141389349",
+  "run_id": "39141776446",
   "run_attempt": "1",
-  "run_number": "1",
+  "run_number": "2",
   "event": "workflow_dispatch",
-  "sha": "07f0a4288d3584f52c72c3864f8908e96e1b5390",
+  "sha": "4df5de2374e853d8d53d746924ac2618a8d3a6f8",
   "ref": "main",
-  "url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/attempts/1",
-  "recorded_at": "2026-10-18T15:40:56.299Z",
+  "url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/attempts/1",
+  "recorded_at": "2026-10-18T15:46:15.992Z",
   "matrix_status": "fail",
   "cells": [
     {
@@ -19,17 +19,20 @@
         "actual": "v20.20.2"
       },
       "status": "pass",
-      "install_ms": 6497,
-      "test_ms": 31867,
-      "job_ms": 48000,
+      "install_ms": 4506,
+      "test_ms": 32005,
+      "job_ms": 51000,
       "tests": {
         "total": 1289,
         "passed": 1289,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "unhandled_errors": 0,
+        "files": "75/75",
+        "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390835"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512214"
     },
     {
       "cell": "api-node22",
@@ -40,17 +43,20 @@
         "actual": "v22.23.3"
       },
       "status": "pass",
-      "install_ms": 5656,
-      "test_ms": 21786,
-      "job_ms": 34000,
+      "install_ms": 4187,
+      "test_ms": 22289,
+      "job_ms": 37000,
       "tests": {
         "total": 1289,
         "passed": 1289,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "unhandled_errors": 0,
+        "files": "75/75",
+        "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390824"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512131"
     },
     {
       "cell": "api-node24",
@@ -61,17 +67,20 @@
         "actual": "v24.21.0"
       },
       "status": "fail",
-      "install_ms": 88578,
-      "test_ms": 40407,
-      "job_ms": 136000,
+      "install_ms": 91100,
+      "test_ms": 41489,
+      "job_ms": 145000,
       "tests": {
         "total": 1289,
-        "passed": 1289,
+        "passed": 749,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "unhandled_errors": 24,
+        "files": "51/75",
+        "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390821"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717511973"
     },
     {
       "cell": "python-3.9",
@@ -82,17 +91,18 @@
         "actual": "3.9.25"
       },
       "status": "pass",
-      "install_ms": 8746,
-      "test_ms": 1831,
-      "job_ms": 24000,
+      "install_ms": 9323,
+      "test_ms": 1847,
+      "job_ms": 30000,
       "tests": {
         "total": 115,
         "passed": 115,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "source": "junit"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390863"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512111"
     },
     {
       "cell": "python-3.13",
@@ -103,17 +113,18 @@
         "actual": "3.13.16"
       },
       "status": "pass",
-      "install_ms": 10050,
-      "test_ms": 2404,
-      "job_ms": 19000,
+      "install_ms": 9406,
+      "test_ms": 2050,
+      "job_ms": 22000,
       "tests": {
         "total": 115,
         "passed": 115,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "source": "junit"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390709"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512174"
     },
     {
       "cell": "sdk-node22",
@@ -124,17 +135,20 @@
         "actual": "v22.23.3"
       },
       "status": "pass",
-      "install_ms": 7493,
-      "test_ms": 21563,
-      "job_ms": 35000,
+      "install_ms": 5554,
+      "test_ms": 21778,
+      "job_ms": 37000,
       "tests": {
         "total": 222,
         "passed": 222,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "unhandled_errors": 0,
+        "files": "10/10",
+        "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390914"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512077"
     },
     {
       "cell": "sdk-node24",
@@ -145,17 +159,20 @@
         "actual": "v24.21.0"
       },
       "status": "pass",
-      "install_ms": 56789,
-      "test_ms": 20965,
-      "job_ms": 84000,
+      "install_ms": 93690,
+      "test_ms": 21397,
+      "job_ms": 124000,
       "tests": {
         "total": 222,
         "passed": 222,
         "failed": 0,
-        "skipped": 0
+        "skipped": 0,
+        "unhandled_errors": 0,
+        "files": "10/10",
+        "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141389349/job/117716390849"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/39141776446/job/117717512107"
     }
   ],
   "prod_smoke": {
@@ -163,7 +180,7 @@
     "method": "GET",
     "url": "https://api.basedagents.ai/v1/status",
     "http_code": 200,
-    "time_total_s": 0.562801,
+    "time_total_s": 3.857937,
     "curl_exit": 0,
     "response_keys": [
       "agentid",
@@ -179,7 +196,7 @@
       "verifications",
       "version"
     ],
-    "at": "2026-10-18T15:38:32Z",
+    "at": "2026-10-18T15:43:45Z",
     "requests_sent": 1
   }
 }
