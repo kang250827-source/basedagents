@@ -90,5 +90,50 @@ No secrets are needed. Permissions are least-privilege per job:
 history) and `contents: write` (fallback branch only); `pages` gets
 `pages: write` + `id-token: write`; `prod-smoke` gets none.
 
+## Status in this fork (kang250827-source/basedagents)
+
+- Runs: https://github.com/kang250827-source/basedagents/actions/workflows/conformance.yml
+- Dashboard: GitHub Pages is **not enabled** in this fork yet, so the `pages`
+  job is red (`continue-on-error`, it does not fail the run) with
+  "Ensure GitHub Pages has been enabled". The same static site is published by
+  the fallback to the `conformance-dashboard` branch, `docs/` folder
+  (`docs/index.html`, `docs/history.json`) and as the `conformance-dashboard`
+  artifact of every run. Once Settings → Pages → Source = GitHub Actions is
+  set, the next run deploys it to https://kang250827-source.github.io/basedagents/.
+
+### Known red cell: `api-node24` (honest red, diagnosed)
+
+6 of 7 cells are green. The API suite on **Node 24** is red on every run so far:
+vitest reports `Test Files 53 passed (75)` / `Tests 775 passed (1289)` /
+`Errors 22 errors` (run 1) and `749 passed`, `24 errors` (run 2). No test
+assertion fails; 22–26 vitest fork workers abort while tearing down, with
+
+```
+# node::RemoveEnvironmentCleanupHook(...) at ../src/api/hooks.cc:142
+# Assertion failed: (env) != nullptr
+ 4: Database::~Database()   [.../better-sqlite3/build/Release/better_sqlite3.node]
+ 4: Statement::~Statement() [.../better-sqlite3/build/Release/better_sqlite3.node]
+```
+
+Cause: `package-lock.json` pins **better-sqlite3 11.10.0**, which publishes no
+Node 24 (ABI 137) prebuild (only `node-v127` for Linux x64), so on Node 24 it is
+compiled from source during `npm ci` (install 88–93 s vs 4–6 s on Node 20/22)
+and that build aborts in its native destructors when a worker exits.
+better-sqlite3 **v12.0.0** release notes: "Add node v24 to build matrix".
+
+Experiment (`.github/workflows/diagnose-node24.yml`, same suite, Node 24.21.0,
+run https://github.com/kang250827-source/basedagents/actions/runs/39141777570):
+
+| variant | better-sqlite3 | result |
+|---|---|---|
+| locked | 11.10.0 | Test Files 49 passed (75), Tests 723 passed (1289), Errors 26 — **red** |
+| bsql-12 | 12.11.1 (bumped in the runner only) | Test Files 75 passed (75), Tests 1289 passed (1289) — **green** |
+
+Suggested upstream fix (not applied here, the matrix tests the repo as it is):
+bump `better-sqlite3` in `packages/api` to `^12` (Node ≥ 20 required, which
+matches the matrix). Node 20/22 production paths are unaffected today; the
+API's production runtime is Cloudflare Workers/D1, so this is a local/test and
+self-hosting compatibility issue, not a production outage.
+
 Note for forks: GitHub disables scheduled workflows in forks until Actions are
 enabled there, and pauses schedules in any repo after 60 days without activity.

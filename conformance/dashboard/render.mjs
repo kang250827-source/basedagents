@@ -26,6 +26,9 @@ const cellNames = [...new Set(runs.flatMap((r) => r.cells.map((c) => c.cell)))]
 function testsText(c) {
   const t = c.tests;
   if (!t) return 'no test report';
+  // Records written before vitest summaries were captured (schema-1 runs) can
+  // carry JUnit totals for a crashed cell; never show those as all-passed.
+  if (c.status !== 'pass' && !t.failed && !t.source) return `${t.total} cases listed, result unknown (cell crashed; recorded before summary capture)`;
   if (t.passed == null) return `${t.total} cases, result unknown (${t.note ?? 'runner error'})`;
   return `${t.passed}/${t.total} passed${t.failed ? `, ${t.failed} failed` : ''}${t.skipped ? `, ${t.skipped} skipped` : ''}`
     + (t.files ? `; files ${t.files}` : '') + (t.unhandled_errors ? `; ${t.unhandled_errors} unhandled errors` : '');
