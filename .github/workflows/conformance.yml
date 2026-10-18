@@ -1,0 +1,251 @@
+name: Conformance (nightly cross-version)
+
+# Nightly proof that the repo's own test suites pass across runtime versions:
+#   - API test suite (packages/api, vitest)      × Node 20, 22, 24
+#   - TypeScript SDK tests (packages/sdk, vitest) × Node 22, 24
+#   - Python SDK tests (packages/python, pytest)  × Python 3.9, 3.13
+# = 7 matrix cells. Each cell times its install and test steps separately and
+# uploads result.json + logs + JUnit XML. A separate job sends ONE read-only
+# GET to the production API (no auth, no retries) and never gates the matrix.
+# The `history` job appends this run to the accumulating JSON history (carried
+# run-to-run as the `conformance-history` artifact), renders the static
+# dashboard (last 30 runs, per-cell pass/fail + timings), uploads it as a
+# GitHub Pages artifact and, as a fallback, commits it to the
+# `conformance-dashboard` branch under docs/. See conformance/README.md.
+#
+# The matrix itself makes no calls to the production registry: the suites run
+# against in-process code (vitest / pytest with mocked HTTP).
+
+on:
+  schedule:
+    - cron: '37 3 * * *'   # nightly, 03:37 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  HISTORY_ARTIFACT: conformance-history
+  HISTORY_KEEP: '100'          # runs stored in history.json
+  DASHBOARD_WINDOW: '30'       # runs shown on the dashboard
+  PUBLISH_BRANCH: conformance-dashboard   # fallback publish target; set '' to disable
+  EXPECTED_CELLS: api-node20,api-node22,api-node24,sdk-node22,sdk-node24,python-3.9,python-3.13
+
+jobs:
+  api:
+    name: "API tests · Node ${{ matrix.node }} [api-node${{ matrix.node }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install + test (timed)
+        env:
+          OUT: ${{ runner.temp }}/cell
+        run: >-
+          node conformance/scripts/run-cell.mjs
+          --cell "api-node${{ matrix.node }}" --suite api --runtime node --requested "${{ matrix.node }}"
+          --install "npm ci --no-audit --no-fund"
+          --test "npm test --workspace=packages/api -- --reporter=default --reporter=junit --outputFile.junit=$OUT/junit.xml"
+          --junit "$OUT/junit.xml" --out "$OUT"
+      - name: Upload cell result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cell-api-node${{ matrix.node }}
+          path: ${{ runner.temp }}/cell
+          retention-days: 90
+          if-no-files-found: warn
+
+  sdk-ts:
+    name: "TS SDK tests · Node ${{ matrix.node }} [sdk-node${{ matrix.node }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install + test (timed)
+        env:
+          OUT: ${{ runner.temp }}/cell
+        run: >-
+          node conformance/scripts/run-cell.mjs
+          --cell "sdk-node${{ matrix.node }}" --suite sdk --runtime node --requested "${{ matrix.node }}"
+          --install "npm ci --no-audit --no-fund"
+          --test "npm test --workspace=packages/sdk -- --reporter=default --reporter=junit --outputFile.junit=$OUT/junit.xml"
+          --junit "$OUT/junit.xml" --out "$OUT"
+      - name: Upload cell result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cell-sdk-node${{ matrix.node }}
+          path: ${{ runner.temp }}/cell
+          retention-days: 90
+          if-no-files-found: warn
+
+  python:
+    name: "Python SDK tests · Python ${{ matrix.python }} [python-${{ matrix.python }}]"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.9', '3.13']   # declared floor (requires-python >=3.9) and newest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # Only to run the cell harness (run-cell.mjs); the suite is pure Python.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install + test (timed)
+        env:
+          OUT: ${{ runner.temp }}/cell
+        run: >-
+          node conformance/scripts/run-cell.mjs
+          --cell "python-${{ matrix.python }}" --suite python --runtime python --requested "${{ matrix.python }}"
+          --install "python -m pip install --upgrade pip && python -m pip install -e 'packages/python[dev]'"
+          --test "python -m pytest packages/python/tests -q --junitxml=$OUT/junit.xml"
+          --junit "$OUT/junit.xml" --out "$OUT"
+      - name: Upload cell result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cell-python-${{ matrix.python }}
+          path: ${{ runner.temp }}/cell
+          retention-days: 90
+          if-no-files-found: warn
+
+  # ── Separate, clearly labelled: the ONLY production contact in this workflow.
+  # One unauthenticated, read-only GET; no retries, no redirects followed.
+  # Not part of the matrix; its result is recorded on its own dashboard row.
+  prod-smoke:
+    name: "Production smoke — single read-only GET (not part of matrix)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions: {}
+    env:
+      SMOKE_URL: https://api.basedagents.ai/v1/status
+    steps:
+      - name: GET /v1/status (one request)
+        run: |
+          mkdir -p smoke
+          set +e
+          out=$(curl -sS --max-time 20 -o smoke/body.json -w '%{http_code} %{time_total}' "$SMOKE_URL")
+          ec=$?
+          set -e
+          code=${out%% *}; t=${out##* }
+          status=fail
+          if [ "$ec" = 0 ] && [ "$code" = 200 ] && jq -e 'type == "object"' smoke/body.json >/dev/null 2>&1; then status=pass; fi
+          keys=$(jq -c 'keys' smoke/body.json 2>/dev/null || echo null)
+          jq -n --arg status "$status" --arg url "$SMOKE_URL" --arg code "$code" --arg t "$t" --argjson curl_exit "$ec" \
+            --argjson keys "$keys" --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{status:$status, method:"GET", url:$url, http_code:($code|tonumber? // null), time_total_s:($t|tonumber? // null), curl_exit:$curl_exit, response_keys:$keys, at:$at, requests_sent:1}' \
+            > smoke/smoke.json
+          cat smoke/smoke.json
+          echo "| prod smoke | GET $SMOKE_URL | HTTP $code | ${t}s | $status |" >> "$GITHUB_STEP_SUMMARY"
+          [ "$status" = pass ]
+      - name: Upload smoke result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prod-smoke
+          path: smoke
+          retention-days: 90
+
+  history:
+    name: Record history + render dashboard
+    needs: [api, sdk-ts, python, prod-smoke]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write   # only for the fallback push to $PUBLISH_BRANCH
+      actions: read     # list previous runs, download their history artifact
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download this run's cell results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cell-*
+          path: cells
+      - name: Download this run's smoke result
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: prod-smoke
+          path: smoke
+      - name: Fetch previous history (artifact chain, branch fallback)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash conformance/scripts/fetch-history.sh prev
+      - name: Job metadata (GitHub timings + job links)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/attempts/$GITHUB_RUN_ATTEMPT/jobs?per_page=100" > jobs.json || echo '{"jobs":[]}' > jobs.json
+      - name: Aggregate + render
+        run: |
+          node conformance/scripts/aggregate.mjs --cells cells --smoke smoke --prev prev/history.json \
+            --jobs jobs.json --expected "$EXPECTED_CELLS" --keep "$HISTORY_KEEP" --out site
+          node conformance/dashboard/render.mjs site/history.json site/index.html
+          touch site/.nojekyll
+          cp site/run.json "site/run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.json"
+      - name: Store history (accumulating JSON, carried to the next run)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.HISTORY_ARTIFACT }}
+          path: site/history.json
+          retention-days: 90
+      - name: Store rendered dashboard
+        uses: actions/upload-artifact@v4
+        with:
+          name: conformance-dashboard
+          path: site
+          include-hidden-files: true
+          retention-days: 90
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - name: Fallback publish — commit dashboard to ${{ env.PUBLISH_BRANCH }}:docs/
+        if: env.PUBLISH_BRANCH != ''
+        run: bash conformance/scripts/publish-branch.sh site "$PUBLISH_BRANCH"
+
+  pages:
+    name: Deploy dashboard to GitHub Pages (needs Pages source = GitHub Actions)
+    needs: history
+    if: always() && needs.history.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true   # Pages not enabled → this job is red, the run is not
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
