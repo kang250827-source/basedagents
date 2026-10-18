@@ -23,9 +23,17 @@ const SYMBOL = { pass: '✓', fail: '✗', error: '!', missing: '?' };
 const cellNames = [...new Set(runs.flatMap((r) => r.cells.map((c) => c.cell)))]
   .sort((x, y) => x.localeCompare(y, 'en', { numeric: true }));
 
+function testsText(c) {
+  const t = c.tests;
+  if (!t) return 'no test report';
+  if (t.passed == null) return `${t.total} cases, result unknown (${t.note ?? 'runner error'})`;
+  return `${t.passed}/${t.total} passed${t.failed ? `, ${t.failed} failed` : ''}${t.skipped ? `, ${t.skipped} skipped` : ''}`
+    + (t.files ? `; files ${t.files}` : '') + (t.unhandled_errors ? `; ${t.unhandled_errors} unhandled errors` : '');
+}
+
 function square(run, cell) {
   if (!cell) return `<td class="sq none" title="not in this run">·</td>`;
-  const t = cell.tests ? `${cell.tests.passed}/${cell.tests.total} passed` : 'no test report';
+  const t = testsText(cell);
   const tip = `run #${run.run_number ?? run.run_id} (${when(run.recorded_at)}) — ${cell.cell}: ${cell.status}; ${t}; install ${secs(cell.install_ms)}, tests ${secs(cell.test_ms)}`
     + (cell.failed_cases?.length ? `; failing: ${cell.failed_cases.slice(0, 3).join(' | ')}` : '');
   const href = cell.job_url ?? run.url;
@@ -47,7 +55,7 @@ const smokeRow = `<tr class="smoke"><th class="row">prod smoke (1 GET)</th><td c
   return `<td class="sq ${esc(s.status)}" title="${esc(tip)}">${SYMBOL[s.status] ?? '?'}<small>${esc(s.http_code ?? '')}</small></td>`;
 }).join('')}</tr>`;
 
-const latestTable = latest ? latest.cells.map((c) => `<tr class="${esc(c.status)}"><td>${esc(c.cell)}</td><td>${esc(c.runtime ? `${c.runtime.name} ${c.runtime.actual}` : '—')}</td><td class="st">${esc(c.status)}</td><td>${c.tests ? `${c.tests.passed}/${c.tests.total}${c.tests.skipped ? ` (${c.tests.skipped} skipped)` : ''}` : '—'}</td><td>${secs(c.install_ms)}</td><td>${secs(c.test_ms)}</td><td>${secs(c.job_ms)}</td><td>${c.job_url ? `<a href="${esc(c.job_url)}">job</a>` : '—'}</td></tr>`
+const latestTable = latest ? latest.cells.map((c) => `<tr class="${esc(c.status)}"><td>${esc(c.cell)}</td><td>${esc(c.runtime ? `${c.runtime.name} ${c.runtime.actual}` : '—')}</td><td class="st">${esc(c.status)}</td><td>${esc(testsText(c))}</td><td>${secs(c.install_ms)}</td><td>${secs(c.test_ms)}</td><td>${secs(c.job_ms)}</td><td>${c.job_url ? `<a href="${esc(c.job_url)}">job</a>` : '—'}</td></tr>`
   + (c.failed_cases?.length ? `<tr class="fails"><td colspan="8">failing: ${c.failed_cases.map(esc).join('<br>')}</td></tr>` : '')).join('\n') : '';
 
 const html = `<!doctype html>

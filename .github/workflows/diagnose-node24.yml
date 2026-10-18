@@ -1,0 +1,44 @@
+name: Diagnose api-node24 (better-sqlite3 on Node 24)
+
+# One-off experiment behind the red api-node24 conformance cell. Not scheduled,
+# not part of the dashboard. Same API suite on Node 24 twice:
+#   locked   — better-sqlite3 exactly as package-lock.json pins it (11.10.0)
+#   bsql-12  — the same, with better-sqlite3 bumped to ^12 in the runner only
+# Nothing is committed; no production calls.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api-node24:
+    name: "API tests · Node 24 · better-sqlite3 ${{ matrix.variant }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [locked, bsql-12]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install (lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Bump better-sqlite3 to ^12 (runner only)
+        if: matrix.variant == 'bsql-12'
+        run: npm install better-sqlite3@^12 --workspace=packages/api --no-audit --no-fund
+      - name: Versions
+        run: |
+          node -v
+          node -p "'better-sqlite3 ' + require('better-sqlite3/package.json').version"
+          ls node_modules/better-sqlite3/build/Release/ || true
+      - name: API test suite
+        run: npm test --workspace=packages/api 2>&1 | tee api-test.log; exit ${PIPESTATUS[0]}
+      - name: Summary
+        if: always()
+        run: |
+          sed 's/\x1b\[[0-9;]*m//g' api-test.log | grep -E 'Test Files|^\s*Tests|^\s*Errors|Assertion failed|RemoveEnvironmentCleanupHook' | sort | uniq -c | tee -a "$GITHUB_STEP_SUMMARY"

@@ -40,10 +40,10 @@ function run(label, cmd, logFile) {
     child.stderr.on('data', (d) => { process.stderr.write(d); log.write(d); });
     child.on('close', (code, signal) => {
       const ms = Date.now() - started;
-      log.end();
       console.log('::endgroup::');
       console.log(`${label}: exit=${code}${signal ? ` signal=${signal}` : ''} in ${(ms / 1000).toFixed(1)}s`);
-      resolve({ exit: code ?? 128, ms });
+      // Wait for the log file to be fully flushed before anyone reads it.
+      log.end(() => resolve({ exit: code ?? 128, ms }));
     });
   });
 }
@@ -82,6 +82,25 @@ let test = { exit: null, ms: 0, skipped: true };
 if (install.exit === 0) test = await run('test', a.test, join(a.out, 'test.log'));
 const finishedAt = new Date().toISOString();
 
+// Vitest's own end-of-run summary is authoritative when a worker crashes: its
+// JUnit file can still list every test case without a <failure>, while the
+// summary says e.g. "Tests 775 passed (1289)" and "Errors 22 errors".
+function readVitestSummary(logFile) {
+  if (!existsSync(logFile)) return null;
+  const log = readFileSync(logFile, 'utf8').replace(/\x1b\[[0-9;]*m/g, '');
+  const num = (re) => { const m = log.match(re); return m ? Number(m[1]) : null; };
+  const files = log.match(/Test Files\s+(.*?)\((\d+)\)/);
+  const tests = log.match(/^\s*Tests\s+(.*?)\((\d+)\)/m);
+  if (!files && !tests) return null;
+  const count = (str, word) => { const m = str?.match(new RegExp(`(\\d+) ${word}`)); return m ? Number(m[1]) : 0; };
+  return {
+    files_total: files ? Number(files[2]) : null, files_passed: count(files?.[1], 'passed'), files_failed: count(files?.[1], 'failed'),
+    tests_total: tests ? Number(tests[2]) : null, tests_passed: count(tests?.[1], 'passed'), tests_failed: count(tests?.[1], 'failed'),
+    tests_skipped: count(tests?.[1], 'skipped'),
+    unhandled_errors: num(/^\s*Errors\s+(\d+) errors?/m) ?? 0,
+  };
+}
+
 const status = install.exit !== 0 ? 'error' : test.exit === 0 ? 'pass' : 'fail';
 const result = {
   schema: 1,
@@ -92,6 +111,7 @@ const result = {
   install,
   test,
   junit: readJunit(a.junit),
+  vitest_summary: a.suite === 'python' ? null : readVitestSummary(join(a.out, 'test.log')),
   started_at: startedAt,
   finished_at: finishedAt,
   run_id: process.env.GITHUB_RUN_ID ?? null,

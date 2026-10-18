@@ -33,6 +33,21 @@ const readJson = (p, fallback) => { try { return JSON.parse(readFileSync(p, 'utf
 const jobs = readJson(a.jobs, { jobs: [] }).jobs ?? [];
 const jobFor = (cell) => jobs.find((j) => j.name?.includes(`[${cell}]`));
 
+// Prefer the runner's own summary (vitest) over JUnit totals: a crashed worker
+// leaves JUnit cases without <failure> although they never reported a result.
+// For a non-passing cell whose JUnit shows zero failures, say so explicitly.
+function testsOf(c) {
+  const v = c.vitest_summary;
+  if (v && v.tests_total != null) {
+    return { total: v.tests_total, passed: v.tests_passed, failed: v.tests_failed, skipped: v.tests_skipped,
+      unhandled_errors: v.unhandled_errors, files: `${v.files_passed}/${v.files_total}`, source: 'vitest-summary' };
+  }
+  if (!c.junit) return null;
+  const t = { total: c.junit.tests, passed: c.junit.passed, failed: c.junit.failures + c.junit.errors, skipped: c.junit.skipped, source: 'junit' };
+  if (c.status !== 'pass' && t.failed === 0) { t.passed = null; t.note = 'cell failed outside test assertions (crash/unhandled error); JUnit counts not trustworthy'; }
+  return t;
+}
+
 const cells = findFiles(a.cells, 'result.json').map((p) => readJson(p, null)).filter(Boolean)
   .map((c) => {
     const j = jobFor(c.cell);
@@ -40,7 +55,7 @@ const cells = findFiles(a.cells, 'result.json').map((p) => readJson(p, null)).fi
       cell: c.cell, suite: c.suite, runtime: c.runtime, status: c.status,
       install_ms: c.install?.ms ?? null, test_ms: c.test?.ms ?? null,
       job_ms: j?.started_at && j?.completed_at ? Date.parse(j.completed_at) - Date.parse(j.started_at) : null,
-      tests: c.junit ? { total: c.junit.tests, passed: c.junit.passed, failed: c.junit.failures + c.junit.errors, skipped: c.junit.skipped } : null,
+      tests: testsOf(c),
       failed_cases: c.junit?.failed_cases?.slice(0, 10) ?? [],
       job_url: j?.html_url ?? null,
     };
