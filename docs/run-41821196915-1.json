@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "run_id": "41626144305",
+  "run_id": "41821196915",
   "run_attempt": "1",
-  "run_number": "19",
+  "run_number": "20",
   "event": "schedule",
   "sha": "649fd7959a05e5cfc9a52f1c4d20b64e3615726b",
   "ref": "main",
-  "url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/attempts/1",
-  "recorded_at": "2026-11-03T11:17:44.619Z",
+  "url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/attempts/1",
+  "recorded_at": "2026-11-04T11:30:34.027Z",
   "matrix_status": "fail",
   "cells": [
     {
@@ -19,9 +19,9 @@
         "actual": "v20.20.2"
       },
       "status": "fail",
-      "install_ms": 3234,
-      "test_ms": 23551,
-      "job_ms": 38000,
+      "install_ms": 4348,
+      "test_ms": 31197,
+      "job_ms": 50000,
       "tests": {
         "total": 1289,
         "passed": 1288,
@@ -34,7 +34,7 @@
       "failed_cases": [
         "src/acquisition/report.test.ts › acquisition reports &gt; serves the bearer admin endpoint with CSV export, fail-closed auth"
       ],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883858909"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544473973"
     },
     {
       "cell": "api-node22",
@@ -45,9 +45,9 @@
         "actual": "v22.23.4"
       },
       "status": "fail",
-      "install_ms": 3368,
-      "test_ms": 21538,
-      "job_ms": 31000,
+      "install_ms": 5087,
+      "test_ms": 29957,
+      "job_ms": 43000,
       "tests": {
         "total": 1289,
         "passed": 1288,
@@ -60,7 +60,7 @@
       "failed_cases": [
         "src/acquisition/report.test.ts › acquisition reports &gt; serves the bearer admin endpoint with CSV export, fail-closed auth"
       ],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883859148"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544474156"
     },
     {
       "cell": "api-node24",
@@ -71,9 +71,9 @@
         "actual": "v24.22.1"
       },
       "status": "fail",
-      "install_ms": 43025,
-      "test_ms": 16167,
-      "job_ms": 67000,
+      "install_ms": 47821,
+      "test_ms": 17417,
+      "job_ms": 72000,
       "tests": {
         "total": 1289,
         "passed": 1288,
@@ -86,7 +86,7 @@
       "failed_cases": [
         "src/acquisition/report.test.ts › acquisition reports &gt; serves the bearer admin endpoint with CSV export, fail-closed auth"
       ],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883859052"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544474126"
     },
     {
       "cell": "python-3.9",
@@ -98,7 +98,7 @@
       "job_ms": null,
       "tests": null,
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883858931",
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544473598",
       "job_conclusion": "failure"
     },
     {
@@ -107,12 +107,12 @@
       "runtime": {
         "name": "python",
         "requested": "3.13",
-        "actual": "3.13.17"
+        "actual": "3.13.18"
       },
       "status": "pass",
-      "install_ms": 11954,
-      "test_ms": 1441,
-      "job_ms": 22000,
+      "install_ms": 9839,
+      "test_ms": 1733,
+      "job_ms": 19000,
       "tests": {
         "total": 115,
         "passed": 115,
@@ -121,7 +121,7 @@
         "source": "junit"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883859152"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544473911"
     },
     {
       "cell": "sdk-node22",
@@ -132,9 +132,9 @@
         "actual": "v22.23.4"
       },
       "status": "pass",
-      "install_ms": 4028,
-      "test_ms": 21217,
-      "job_ms": 33000,
+      "install_ms": 5153,
+      "test_ms": 21581,
+      "job_ms": 34000,
       "tests": {
         "total": 222,
         "passed": 222,
@@ -145,7 +145,7 @@
         "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883858956"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544474029"
     },
     {
       "cell": "sdk-node24",
@@ -156,9 +156,9 @@
         "actual": "v24.22.1"
       },
       "status": "pass",
-      "install_ms": 47107,
-      "test_ms": 20987,
-      "job_ms": 77000,
+      "install_ms": 65070,
+      "test_ms": 21378,
+      "job_ms": 94000,
       "tests": {
         "total": 222,
         "passed": 222,
@@ -169,7 +169,7 @@
         "source": "vitest-summary"
       },
       "failed_cases": [],
-      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41626144305/job/125883858785"
+      "job_url": "https://github.com/kang250827-source/basedagents/actions/runs/41821196915/job/126544474050"
     }
   ],
   "prod_smoke": {
@@ -177,7 +177,7 @@
     "method": "GET",
     "url": "https://api.basedagents.ai/v1/status",
     "http_code": 200,
-    "time_total_s": 0.947445,
+    "time_total_s": 0.293097,
     "curl_exit": 0,
     "response_keys": [
       "agentid",
@@ -193,7 +193,7 @@
       "verifications",
       "version"
     ],
-    "at": "2026-11-03T11:16:22Z",
+    "at": "2026-11-04T11:28:53Z",
     "requests_sent": 1
   }
 }
